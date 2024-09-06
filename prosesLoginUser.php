@@ -1,29 +1,54 @@
 <?php
 // login_process.php
 session_start();
-include 'database_connection.php'; // Gantilah sesuai dengan koneksi database Anda
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $role = $_POST['role'];
+$username = $_POST['username'];
+$password = $_POST['password'];
+$role = $_POST['role'];
 
-    // Query untuk mengecek apakah pengguna ada di database
-    $query = "SELECT * FROM users WHERE username='$username' AND password='$password' AND role='$role'";
-    $result = mysqli_query($conn, $query);
+// Koneksi ke database
+$conn = new mysqli('localhost', 'root', '', 'inti');
 
-    if (mysqli_num_rows($result) == 1) {
-        $_SESSION['username'] = $username;
-        $_SESSION['role'] = $role;
+if ($conn->connect_error) {
+    die("Koneksi gagal: " . $conn->connect_error);
+}
 
+// Periksa login
+$sql = "SELECT * FROM user WHERE nama = ? AND role = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ss", $username, $role);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $user = $result->fetch_assoc();
+    if (password_verify($password, $user['password'])) {
+        $_SESSION['username'] = $user['nama'];
+        $_SESSION['role'] = $user['role'];
+        
         // Redirect berdasarkan role
-        if ($role == 'mahasiswa') {
-            header("Location: mahasiswa_dashboard.php");
-        } else if ($role == 'dosen') {
-            header("Location: dosen_dashboard.php");
+        if ($role == 'laboran') {
+            header("Location: dashboardAdmin.php");
+        } elseif ($role == 'mahasiswa') {
+            header("Location: dashboard.php");
+        } elseif ($role == 'dosen') {
+            header("Location: dashboard.php");
+        } else {
+            // Role tidak dikenali
+            $_SESSION['error'] = "Role tidak dikenali.";
+            header("Location: login.php");
         }
     } else {
-        echo "Nama pengguna atau kata sandi salah, atau role tidak sesuai.";
+        // Password salah
+        $_SESSION['error'] = "Kata sandi salah.";
+        header("Location: login.php");
     }
+} else {
+    // Username atau role tidak ditemukan
+    $_SESSION['error'] = "Nama pengguna atau peran tidak ditemukan.";
+    header("Location: login.php");
 }
+
+$stmt->close();
+$conn->close();
 ?>

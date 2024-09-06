@@ -1,19 +1,14 @@
 <?php
-$koneksi = mysqli_connect("localhost", "root", "", "inti");
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "inti";
 
-//check connection
-if (mysqli_connect_error()) {
-    echo "Koneksi database gagal :" . mysqli_connect_error();
-} else {
-    echo "";
-}
+// Membuat koneksi
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-if (isset($_GET['pesan'])) {
-    if ($_GET['pesan'] == "gagal") {
-        echo "Login gagal! username dan password salah!";
-    } else if ($_GET['pesan'] == "logout") {
-        echo "Anda telah berhasil logout";
-    } else if ($_GET['pesan'] == "belum_login") {
-        echo "Anda harus login untuk mengakses halaman admin";
-    }
+// Memeriksa koneksi
+if ($conn->connect_error) {
+    die("Koneksi gagal: " . $conn->connect_error);
 }
+?>
